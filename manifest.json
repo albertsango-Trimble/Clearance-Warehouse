@@ -1,0 +1,7 @@
+{
+  "name": "Crane Clearance Checker",
+  "description": "Import a crane model, place it, and generate a swing-envelope solid for clearance checking against your design.",
+  "url": "https://REPLACE_WITH_YOUR_DEPLOYED_URL/index.html",
+  "icon": "https://REPLACE_WITH_YOUR_DEPLOYED_URL/icon.png",
+  "extensionType": "3dviewer"
+}

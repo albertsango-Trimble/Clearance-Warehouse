@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crane Clearance Checker</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0;
+      padding: 12px;
+      font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 14px; margin: 0 0 12px; }
+    section { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e5e5e5; }
+    section:last-child { border-bottom: none; }
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #666; margin: 0 0 8px; }
+    label { display: block; font-size: 12px; margin: 6px 0 2px; }
+    input { width: 100%; box-sizing: border-box; padding: 4px 6px; font-size: 13px; }
+    button {
+      margin-top: 8px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f5f5f5;
+    }
+    button:hover { background: #ebebeb; }
+    #status { font-size: 12px; color: #666; white-space: pre-wrap; }
+    .row { display: flex; gap: 8px; }
+    .row > div { flex: 1; }
+  </style>
+</head>
+<body>
+  <h1>Crane Clearance Checker</h1>
+
+  <section>
+    <h2>1. Get a crane model</h2>
+    <button id="browse-warehouse">Browse 3D Warehouse ↗</button>
+    <div id="status" style="margin-top:6px;">
+      Opens 3D Warehouse in a new tab — there's no public API for it, so search/download stays manual.
+      Download as Collada (.dae) or SketchUp (.skp), then upload it into this project's Files the normal way.
+      Once it's converted, use the placement tool below.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Place the crane</h2>
+    <label for="model-select">Model in this project</label>
+    <select id="model-select"><option value="">— refresh to list models —</option></select>
+    <button id="refresh-models">Refresh model list</button>
+    <div class="row">
+      <div><label for="pos-x">X (m)</label><input id="pos-x" type="number" value="0" /></div>
+      <div><label for="pos-y">Y (m)</label><input id="pos-y" type="number" value="0" /></div>
+      <div><label for="pos-z">Z (m)</label><input id="pos-z" type="number" value="0" /></div>
+    </div>
+    <label for="rot-z">Rotation about Z (deg)</label>
+    <input id="rot-z" type="number" value="0" />
+    <button id="place-model">Place at coordinates</button>
+  </section>
+
+  <section>
+    <h2>3. Generate swing envelope</h2>
+    <div class="row">
+      <div><label for="boom-radius">Boom reach (m)</label><input id="boom-radius" type="number" value="30" /></div>
+      <div><label for="boom-min-h">Min height (m)</label><input id="boom-min-h" type="number" value="0" /></div>
+      <div><label for="boom-max-h">Max height (m)</label><input id="boom-max-h" type="number" value="35" /></div>
+    </div>
+    <div class="row">
+      <div><label for="slew-start">Slew start (deg)</label><input id="slew-start" type="number" value="0" /></div>
+      <div><label for="slew-end">Slew end (deg)</label><input id="slew-end" type="number" value="360" /></div>
+    </div>
+    <button id="download-envelope">Generate &amp; download envelope.obj</button>
+    <div style="margin-top:6px; color:#666;">
+      Import the downloaded .obj into this project the same way as the crane model, then place it at the crane's
+      base point (step 2). It represents the full swept volume of the boom.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Run the clearance check</h2>
+    <div style="color:#666;">
+      In Connect's <strong>Clashes</strong> panel, create one Clash Set: swing-envelope solid vs. your design/site
+      model, mode = <em>clearance</em>, with your minimum distance. This is currently a one-time manual step — see
+      PLAN.md §2.3 for why.
+    </div>
+  </section>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
