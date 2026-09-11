@@ -27,6 +27,27 @@ this scaffold is shaped the way it is.
 - It doesn't animate the crane swinging — that's the phase-2 stretch goal in
   `PLAN.md` §3 step 6.
 
+## The manifest schema (confirmed)
+
+Trimble's real schema, from the published `ExtensionSetting` reference
+(<https://components.connect.trimble.com/trimble-connect-project-workspace-api/docs/interfaces/extensionsetting.html>),
+has exactly six fields:
+
+| field | required? |
+|---|---|
+| `title` | **required** |
+| `url` | **required** |
+| `description` | optional |
+| `icon` | optional |
+| `enabled` | optional (boolean) |
+| `configCommand` | optional |
+
+There's no `name`, `extensionType`, `vendor`, `id`, or `version` field — an
+earlier version of this scaffold's `manifest.json` used `name` instead of
+`title`, which is why Connect rejected it as "not a valid extension" (it
+fetches and validates the manifest, and `title` was missing). `manifest.json`
+in this scaffold now matches the confirmed schema.
+
 ## Setup
 
 ```bash
@@ -35,19 +56,41 @@ npm run dev      # local dev server, for iterating on the UI in isolation
 npm run build    # produces dist/ for deployment
 ```
 
-1. Deploy `dist/` (after `npm run build`) to any static HTTPS host — Netlify,
-   Vercel, GitHub Pages, etc. all work fine for development. The manifest and
-   panel URL must be HTTPS and CORS-enabled.
-2. Edit `manifest.json`: replace `REPLACE_WITH_YOUR_DEPLOYED_URL` with your
-   real deployed URL, and re-verify the field names (`extensionType`, `url`,
-   `icon`, `description`) against Trimble's current manifest schema at
-   <https://developer.trimble.com/docs/connect/tools/api/workspace> — this
-   scaffold's manifest is built from a summarized read of that page, not the
-   literal schema, so double-check before registering.
-3. In Trimble Connect for Browser, open a project you admin, go to
-   **Project Settings → Apps & Capabilities**, and add your manifest URL as
-   a custom extension.
-4. Open the project's 3D Viewer — the panel should appear as a side panel
+**You must deploy the built `dist/` output, not the raw repo.** `index.html`
+loads `/src/main.ts` as a module — that's TypeScript, and browsers can't
+execute it directly. Serving the repo's source files as-is (e.g. GitHub
+Pages pointed at the repo root) will load a page with no working JavaScript.
+
+### Deploying via GitHub Pages (GitHub Actions)
+
+This scaffold includes `.github/workflows/deploy.yml`, which builds the
+project with Vite and publishes `dist/` automatically on every push to
+`main`. To use it:
+
+1. In your repo, go to **Settings → Pages → Build and deployment → Source**
+   and set it to **GitHub Actions** (not "Deploy from a branch" — that would
+   serve the raw source again).
+2. Put any static assets the manifest references (like an icon) in
+   `public/` — Vite copies everything in `public/` verbatim into `dist/`.
+   If you already have `crane.png` at the repo root, move it to
+   `public/crane.png`.
+3. Check `vite.config.ts` — `base` must match your GitHub Pages URL path
+   (`/<repo-name>/` for a project site). It's currently set for a repo named
+   `Clearance-Warehouse`; update it if your repo is named differently.
+4. Push to `main`. The Actions tab will show the build/deploy run; once it's
+   green, your manifest and panel URLs
+   (`https://<user>.github.io/<repo>/manifest.json` /
+   `.../index.html`) will be serving the real built app.
+
+Any other static HTTPS host (Netlify, Vercel, etc.) works too — just deploy
+`dist/` after `npm run build`; they don't need the GitHub Actions workflow
+or the `base` path adjustment (Netlify/Vercel serve from the domain root).
+
+5. Edit `manifest.json`'s `url` and `icon` to your real deployed URLs.
+6. In Trimble Connect for Browser, open a project you admin, go to
+   **Project Settings → Apps & Capabilities → Add Custom**, and enter your
+   `manifest.json` URL.
+7. Open the project's 3D Viewer — the panel should appear as a side panel
    extension.
 
 ## Before you trust the Workspace API calls
