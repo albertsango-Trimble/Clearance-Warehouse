@@ -89,6 +89,12 @@
     </div>
   </section>
 
-  <script type="module" src="/src/main.ts"></script>
+  <!--
+    Real Trimble Connect Workspace API library, loaded as a plain global
+    (window.TrimbleConnectWorkspace) — no bundler needed. Pinned to the
+    version confirmed while building this: trimble-connect-workspace-api@0.3.34.
+  -->
+  <script src="https://unpkg.com/trimble-connect-workspace-api@0.3.34/dist/iife/trimbleconnect.workspace.api.js"></script>
+  <script src="./src/main.js"></script>
 </body>
 </html>

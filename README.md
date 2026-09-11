@@ -48,61 +48,65 @@ earlier version of this scaffold's `manifest.json` used `name` instead of
 fetches and validates the manifest, and `title` was missing). `manifest.json`
 in this scaffold now matches the confirmed schema.
 
-## Setup
+## Setup — plain JS, no build step (use this one)
 
-```bash
-npm install
-npm run dev      # local dev server, for iterating on the UI in isolation
-npm run build    # produces dist/ for deployment
+`index.html` now loads `src/main.js` — plain JavaScript, not TypeScript —
+plus the real Trimble Connect Workspace API library straight from a CDN:
+
+```html
+<script src="https://unpkg.com/trimble-connect-workspace-api@0.3.34/dist/iife/trimbleconnect.workspace.api.js"></script>
+<script src="./src/main.js"></script>
 ```
 
-**You must deploy the built `dist/` output, not the raw repo.** `index.html`
-loads `/src/main.ts` as a module — that's TypeScript, and browsers can't
-execute it directly. Serving the repo's source files as-is (e.g. GitHub
-Pages pointed at the repo root) will load a page with no working JavaScript.
+That means **you can deploy the raw repo as-is** — no `npm install`, no
+build, no GitHub Actions, no Pages source setting to change. Whatever's
+committed to `main` is what runs. If you've deployed via GitHub Pages
+pointed at the repo root (the default "Deploy from a branch" setting),
+you're done as soon as `index.html`, `src/main.js`, and a fixed
+`manifest.json` (see below) are pushed.
 
-### Deploying via GitHub Pages (GitHub Actions)
+The old TypeScript files (`src/main.ts`, `src/workspace.ts`,
+`src/geometry/swing-envelope.ts`) and the Vite/GitHub Actions setup
+(`vite.config.ts`, `.github/workflows/deploy.yml`) are still in this
+scaffold as an *optional* upgrade path — useful later if you want real
+type-checking and a proper dev workflow — but they're not needed to get
+this working. Ignore them for now; `src/main.js` has the identical logic
+and has been checked (syntax-checked with Node, and the swing-envelope
+geometry re-tested to produce the same output) to match.
 
-This scaffold includes `.github/workflows/deploy.yml`, which builds the
-project with Vite and publishes `dist/` automatically on every push to
-`main`. To use it:
+### To fix your live deployment
 
-1. In your repo, go to **Settings → Pages → Build and deployment → Source**
-   and set it to **GitHub Actions** (not "Deploy from a branch" — that would
-   serve the raw source again).
-2. Put any static assets the manifest references (like an icon) in
-   `public/` — Vite copies everything in `public/` verbatim into `dist/`.
-   If you already have `crane.png` at the repo root, move it to
-   `public/crane.png`.
-3. Check `vite.config.ts` — `base` must match your GitHub Pages URL path
-   (`/<repo-name>/` for a project site). It's currently set for a repo named
-   `Clearance-Warehouse`; update it if your repo is named differently.
-4. Push to `main`. The Actions tab will show the build/deploy run; once it's
-   green, your manifest and panel URLs
-   (`https://<user>.github.io/<repo>/manifest.json` /
-   `.../index.html`) will be serving the real built app.
+1. Push the updated `index.html` and add `src/main.js` (both in this
+   scaffold) to your repo.
+2. Fix `manifest.json` — same required field as before:
 
-Any other static HTTPS host (Netlify, Vercel, etc.) works too — just deploy
-`dist/` after `npm run build`; they don't need the GitHub Actions workflow
-or the `base` path adjustment (Netlify/Vercel serve from the domain root).
-
-5. Edit `manifest.json`'s `url` and `icon` to your real deployed URLs.
-6. In Trimble Connect for Browser, open a project you admin, go to
+   ```json
+   {
+     "title": "Crane Clearance Checker",
+     "description": "Import a crane model, place it, and generate a swing-envelope solid for clearance checking against your design.",
+     "url": "https://<your-username>.github.io/<your-repo>/index.html",
+     "icon": "https://<your-username>.github.io/<your-repo>/crane.png"
+   }
+   ```
+3. Wait a minute for GitHub Pages to redeploy, then in Trimble Connect
+   remove the existing "Crane Clearance Checker" extension entry entirely
+   (not just toggle it off) and re-add it with the manifest URL — we saw
+   earlier that Trimble Connect can hold onto a stale manifest snapshot
+   from a prior registration, so a plain page refresh isn't always enough.
+4. In Trimble Connect for Browser, open a project you admin, go to
    **Project Settings → Apps & Capabilities → Add Custom**, and enter your
    `manifest.json` URL.
-7. Open the project's 3D Viewer — the panel should appear as a side panel
-   extension.
+5. Open the project's 3D Viewer — the panel should appear as a side panel
+   extension, and its buttons should now actually respond.
 
 ## Before you trust the Workspace API calls
 
-`src/workspace.ts` and `src/main.ts` are flagged inline wherever a call's
-exact signature wasn't independently verifiable through public docs during
-this build (mainly the `connect()` bootstrap and the exact `placeModel`
-payload shape). Once you `npm install`, check
-`node_modules/trimble-connect-workspace-api`'s type declarations and
-Trimble's example app at
-<https://components.connect.trimble.com/trimble-connect-workspace-api/examples/index.html>,
-and adjust as needed. The method *names* (`getModels`, `toggleModel`,
-`placeModel`, `getObjectBoundingBoxes`, `setSelection`, `getObjects`,
-`addTrimbimModel`, etc.) are confirmed from Trimble's published API
-reference — it's only the call *shapes* that need a final check.
+`src/main.js` is flagged inline wherever a call's exact signature wasn't
+independently verifiable through public docs during this build (mainly the
+exact `placeModel` payload shape). The `TrimbleConnectWorkspace.connect(targetWindow, eventHandler, timeout)`
+bootstrap call and its global name *are* confirmed — pulled directly from
+the published package's actual IIFE bundle on unpkg, not guessed. The
+ViewerAPI method *names* (`getModels`, `toggleModel`, `placeModel`,
+`getObjectBoundingBoxes`, `setSelection`, `getObjects`, `addTrimbimModel`,
+etc.) are confirmed from Trimble's published API reference — it's only a
+couple of call *shapes* that need a final check against a live project.
